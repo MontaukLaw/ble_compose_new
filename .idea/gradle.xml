@@ -15,21 +15,6 @@
             <option value="$PROJECT_DIR$/blecom" />
           </set>
         </option>
-        <option name="resolveModulePerSourceSet" value="false" />
-      </GradleProjectSettings>
-      <GradleProjectSettings>
-        <option name="testRunner" value="GRADLE" />
-        <option name="distributionType" value="DEFAULT_WRAPPED" />
-        <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="gradleHome" value="E:/Gradle/gradle-6.9.1" />
-        <option name="modules">
-          <set>
-            <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/blecom" />
-          </set>
-        </option>
-        <option name="resolveModulePerSourceSet" value="false" />
       </GradleProjectSettings>
     </option>
   </component>

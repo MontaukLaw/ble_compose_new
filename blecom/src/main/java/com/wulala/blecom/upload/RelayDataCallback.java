@@ -6,11 +6,13 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.wulala.blecom.upload.entity.BaseUploadMsg;
+import com.wulala.blecom.utils.UploadMsgUtils;
 
 import java.util.Objects;
 
 import no.nordicsemi.android.ble.callback.profile.ProfileDataCallback;
 import no.nordicsemi.android.ble.data.Data;
+
 
 public abstract class RelayDataCallback implements ProfileDataCallback, RelayNotifyCallback {
 
@@ -29,7 +31,13 @@ public abstract class RelayDataCallback implements ProfileDataCallback, RelayNot
 
         onNewMsg(notifyMsg);
 
-        printLog( data.toString());
-    }
+        printLog(data.toString());
 
+        // log太快, 无需翻译
+        if (data.getValue()[0] != (byte) 0xE1) {
+
+            transLog(UploadMsgUtils.translateLogFoHuman(data.getValue()));
+        }
+
+    }
 }

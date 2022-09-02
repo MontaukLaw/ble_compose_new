@@ -53,6 +53,7 @@ class LogViewModel : ViewModel() {
 fun LogScreen(
     logs: List<String>
 ) {
+
     // val (logSize, onLogChange) = rememberSaveable { mutableStateOf(logs.size) }
     // val (items, onLogChange) = rememberSaveable { mutableStateOf(bleViewModel.simpleTextLog.value!!) }
 

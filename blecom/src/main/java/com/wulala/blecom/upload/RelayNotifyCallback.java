@@ -10,4 +10,6 @@ public interface RelayNotifyCallback {
 
     void printLog(final String log);
 
+    void transLog(final String humanLog);
+
 }

@@ -56,10 +56,12 @@ public class Tools {
 
     private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
 
+    public static final String xxx = "aaa";
+    public static final byte[] bytes = {0x01};
+
     public static String bytesToHex(byte[] bytes) {
 
         char[] hexChars = new char[bytes.length * 3];
-
         for (int j = 0; j < bytes.length; j++) {
             int v = bytes[j] & 0xFF;
             hexChars[j * 3] = HEX_ARRAY[v >>> 4];

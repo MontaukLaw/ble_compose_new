@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 
+import com.wulala.blecom.core.NewSuMManager;
 import com.wulala.blecom.core.SuMBLEManager;
 
 import java.util.ArrayList;
@@ -70,7 +71,6 @@ public class ScanResultDevicesLiveData extends LiveData<List<DiscoveredBluetooth
         return !filteredDevices.isEmpty();
     }
 
-
     // 根据device Name检查是否是想要的device
     private boolean matchesOurDeviceFilter(@NonNull final ScanResult result) {
 
@@ -82,8 +82,8 @@ public class ScanResultDevicesLiveData extends LiveData<List<DiscoveredBluetooth
         if (deviceName == null)
             return false;
 
-        Log.d(TAG, "matchesOurDeviceFilter: " + deviceName);
-        return deviceName.equals(SuMBLEManager.SM_BLE_NAME);
+        Log.d(TAG, "matching: " + deviceName);
+        return deviceName.equals(NewSuMManager.SM_BLE_NAME);
     }
 
     private int indexOf(@NonNull final ScanResult result) {

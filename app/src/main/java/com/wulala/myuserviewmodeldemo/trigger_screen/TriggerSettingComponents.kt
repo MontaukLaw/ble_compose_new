@@ -1,0 +1,1 @@
+package com.wulala.myuserviewmodeldemo.trigger_screen

@@ -21,8 +21,6 @@ import no.nordicsemi.android.ble.livedata.state.ConnectionState.State.*;
 
 public class Utils {
 
-
-
     private static final String PREFS_LOCATION_NOT_REQUIRED = "location_not_required";
     private static final String PREFS_PERMISSION_REQUESTED = "permission_requested";
 

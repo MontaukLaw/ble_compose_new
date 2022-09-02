@@ -1,6 +1,5 @@
 package com.wulala.blecom.upload.entity;
 
-
 import static com.wulala.blecom.upload.NotifyMsgParser.CMD_MSG_UPLOAD_TRIGGER_INFO;
 
 public class TriggerEvent implements BaseUploadMsg {

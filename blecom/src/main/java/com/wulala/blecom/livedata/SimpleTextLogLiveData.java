@@ -35,7 +35,7 @@ public class SimpleTextLogLiveData extends MutableLiveData<List<String>> {
         List<String> newList = new ArrayList<>();
         newList.addAll(simpleTextLog);
 
-        if (newList.size() > 30) {
+        if (newList.size() > 20) {
             simpleTextLog.remove(0);
         }
 

@@ -66,14 +66,25 @@ public class BLEViewModel extends AndroidViewModel {
         return suMBLEManager.getUpload();
     }
 
+    public MutableLiveData<String> getLogForHuman(){
+        return suMBLEManager.getLogForHuman();
+    }
+
     int subDeviceColorInt = 0;
 
     public SimpleTextLogLiveData getSimpleTextLog() {
         return suMBLEManager.getSimpleTextLogLiveData();
     }
 
-    public MutableLiveData<List<String>> getLogs() {
+    public MutableLiveData<List<Integer>> getCAPower() {
+        return suMBLEManager.getChannelAPowerList();
+    }
 
+    public MutableLiveData<List<Integer>> getCBPower() {
+        return suMBLEManager.getChannelBPowerList();
+    }
+
+    public MutableLiveData<List<String>> getLogs() {
         return suMBLEManager.getRelayMsgLiveDataList();
     }
 
@@ -199,9 +210,13 @@ public class BLEViewModel extends AndroidViewModel {
 
     @SuppressLint("MissingPermission")
     private void checkDevice(List<DiscoveredBluetoothDevice> filteredDevices) {
+
         if (filteredDevices != null && filteredDevices.size() > 0) {
+
             Log.d(TAG, "newDevices len: " + filteredDevices.size());
+
             for (DiscoveredBluetoothDevice device : filteredDevices) {
+
                 Log.d(TAG, "device name is " + device.getDevice().getName());
                 Log.d(TAG, "device getAddress is " + device.getAddress());
                 Log.d(TAG, "找到了, mac地址为" + device.getAddress());
@@ -227,7 +242,6 @@ public class BLEViewModel extends AndroidViewModel {
     }
 
     private void connect(@NonNull final DiscoveredBluetoothDevice target) {
-
         relayDevice = target.getDevice();
         reconnect();
     }
@@ -238,7 +252,7 @@ public class BLEViewModel extends AndroidViewModel {
         suMBLEManager.disconnect().enqueue();
     }
 
-    private void writeCmd(byte[] cmd) {
+    public void writeCmd(byte[] cmd) {
         if (suMBLEManager.isConnected()) {
             suMBLEManager.writeByteArray(cmd);
         }
@@ -259,6 +273,7 @@ public class BLEViewModel extends AndroidViewModel {
     }
 
     public void keepSendingCmd() {
+
         final Handler mHandler = new Handler();
         byte[] cmd = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
         Runnable r = new Runnable() {

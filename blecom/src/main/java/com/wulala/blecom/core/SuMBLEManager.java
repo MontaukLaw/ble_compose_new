@@ -20,6 +20,7 @@ import com.wulala.blecom.upload.NotifyMsgParser;
 import com.wulala.blecom.upload.entity.BaseUploadMsg;
 import com.wulala.blecom.upload.RelayDataCallback;
 import com.wulala.blecom.upload.entity.GameState;
+import com.wulala.blecom.upload.entity.PowerLiveData;
 import com.wulala.blecom.upload.entity.SubDevice;
 import com.wulala.blecom.upload.entity.TriggerEvent;
 import com.wulala.blecom.upload.entity.UnknownMsg;
@@ -29,6 +30,7 @@ import com.wulala.blecom.upload.log.entity.PowerLog;
 import com.wulala.blecom.upload.log.entity.WaveLog;
 import com.wulala.blecom.utils.Tools;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -41,22 +43,28 @@ public class SuMBLEManager extends ObservableBleManager {
 
     private static final String TAG = SuMBLEManager.class.getSimpleName();
 
-    public final static String SM_BLE_NAME = "D-LAB ESTIM01";
+    // public final static String SM_BLE_NAME = "D-LAB ESTIM LOCK";
+    public final static String SM_BLE_NAME = "DG-LAB_1000";
+    // D-LAB ESTIM01
+
+    public final static int POWER_LIST_LEN = 25;
 
     // log用的UUID
     public final static UUID LOG_UUID_SERVICE = UUID.fromString("00002003-0000-1000-8000-00805f9b34fb");
     public final static UUID LOG_UUID_CHAR = UUID.fromString("00000008-0000-1000-8000-00805f9b34fb");
 
     // 主Service UUID
-    public final static UUID SM_UUID_SERVICE = UUID.fromString("955a180c-0fe2-f5aa-a094-84b8d4f3e8ad");
+    // public final static UUID SM_UUID_SERVICE = UUID.fromString("955a180c-0fe2-f5aa-a094-84b8d4f3e8ad");
+    public final static UUID SM_UUID_SERVICE = UUID.fromString("0000180c-0000-1000-8000-00805f9b34fb");
 
     // 0x150A 写命令
     // 0x150B Notify
     // 0x150C 波形下载
-    private final static UUID CMD_UUID_BUTTON_CHAR = UUID.fromString("955a150a-0fe2-f5aa-a094-84b8d4f3e8ad");
-    private final static UUID NOTIFY_UUID_BUTTON_CHAR = UUID.fromString("955a150b-0fe2-f5aa-a094-84b8d4f3e8ad");
+    private final static UUID CMD_UUID_BUTTON_CHAR = UUID.fromString("0000150a-0000-1000-8000-00805f9b34fb");
+    private final static UUID NOTIFY_UUID_BUTTON_CHAR = UUID.fromString("0000150b-0000-1000-8000-00805f9b34fb");
 
     private BluetoothGattCharacteristic buttonCharacteristic, ledCharacteristic;
+    private BluetoothGattCharacteristic cmdCharacteristic, notifyCharacteristic;
 
     private boolean supported;
 
@@ -81,8 +89,13 @@ public class SuMBLEManager extends ObservableBleManager {
 
     private final MutableLiveData<String> uploadContent = new MutableLiveData<>();
 
-
     private final SimpleTextLogLiveData simpleTextLogLiveData;
+
+    private final MutableLiveData<String> logForHuman = new MutableLiveData<>();
+
+    public MutableLiveData<String> getLogForHuman() {
+        return logForHuman;
+    }
 
     /////////////////////////////////// Getter /////////////////////////////
 
@@ -135,11 +148,43 @@ public class SuMBLEManager extends ObservableBleManager {
         simpleTextLogLiveData = new SimpleTextLogLiveData();
     }
 
+    public MutableLiveData<List<Integer>> channelAPowerList = new MutableLiveData<>();
+    public MutableLiveData<List<Integer>> channelBPowerList = new MutableLiveData<>();
+
+    public MutableLiveData<List<Integer>> getChannelAPowerList() {
+        if (channelAPowerList == null) {
+            channelAPowerList = new MutableLiveData<>();
+            caPower = new ArrayList<>();
+            channelAPowerList.postValue(caPower);
+        }
+        return channelAPowerList;
+    }
+
+    public MutableLiveData<List<Integer>> getChannelBPowerList() {
+        if (channelBPowerList == null) {
+            channelBPowerList = new MutableLiveData<>();
+            cbPower = new ArrayList<>();
+            channelBPowerList.postValue(cbPower);
+        }
+        return channelBPowerList;
+    }
+
+    private List<Integer> caPower = new ArrayList<>();
+    private List<Integer> cbPower = new ArrayList<>();
+
+    private void addChannelPowerList(Integer newValue, MutableLiveData<List<Integer>> powerListLiveData, List<Integer> powerList) {
+
+        powerList.add(newValue);
+
+        if (powerList.size() > POWER_LIST_LEN) {
+            powerList.remove(0);
+        }
+
+        powerListLiveData.postValue(powerList);
+    }
 
     // char具体用于读写操作
     private BluetoothGattCharacteristic logChar;
-
-    private BluetoothGattCharacteristic cmdCharacteristic, notifyCharacteristic;
 
     // 这个内部类必须是内部类
     private class SuMBleManagerGattCallback extends BleManagerGattCallback {
@@ -229,6 +274,7 @@ public class SuMBLEManager extends ObservableBleManager {
         }
     };
 
+    private int counter = 0;
 
     @NonNull
     @Override
@@ -246,6 +292,14 @@ public class SuMBLEManager extends ObservableBleManager {
             // Objects.requireNonNull(relayMsgLiveDataList.getValue()).add(log);
             // relayMsgLiveDataList.postValue(relayMsgLiveDataList.getValue());
             simpleTextLogLiveData.addNewLog(log);
+            counter++;
+            uploadContent.postValue("NO." + counter + " >> " + log);
+
+        }
+
+        @Override
+        public void transLog(String humanLog) {
+            logForHuman.postValue(humanLog);
         }
 
         @Override
@@ -269,6 +323,13 @@ public class SuMBLEManager extends ObservableBleManager {
 
                     break;
 
+                case NotifyMsgParser.CMD_POWER_LIVE_INFO:
+                    PowerLiveData pld = (PowerLiveData) notifyMsg;
+
+                    addChannelPowerList(pld.getCaPower(), channelAPowerList, caPower);
+                    addChannelPowerList(pld.getCbPower(), channelBPowerList, cbPower);
+
+                    break;
                 default:
                     Log.e(TAG, "unknown msg type");
                     Log.e(TAG, ((UnknownMsg) notifyMsg).toString());

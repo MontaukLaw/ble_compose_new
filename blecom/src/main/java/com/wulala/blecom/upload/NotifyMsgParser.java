@@ -2,6 +2,7 @@ package com.wulala.blecom.upload;
 
 import com.wulala.blecom.upload.entity.BaseUploadMsg;
 import com.wulala.blecom.upload.entity.GameState;
+import com.wulala.blecom.upload.entity.PowerLiveData;
 import com.wulala.blecom.upload.entity.SubDevice;
 import com.wulala.blecom.upload.entity.TriggerEvent;
 import com.wulala.blecom.upload.entity.UnknownMsg;
@@ -17,6 +18,9 @@ public class NotifyMsgParser {
     public final static byte CMD_MSG_UPLOAD_TRIGGER_INFO = (byte)0xFC;
 
     public final static byte CMD_MSG_UPLOAD_CANCEL_TRIGGER_INFO = (byte)0xFD;
+
+    public final static byte CMD_POWER_LIVE_INFO  = (byte)0xE1;
+
 
     public static BaseUploadMsg parse(byte[] dataBytes) {
         byte b = dataBytes[0];
@@ -36,6 +40,10 @@ public class NotifyMsgParser {
 
             case CMD_MSG_UPLOAD_CANCEL_TRIGGER_INFO:
                 rtnMsg = new TriggerEvent(dataBytes, false);
+                break;
+
+            case CMD_POWER_LIVE_INFO:
+                rtnMsg = new PowerLiveData(dataBytes);
                 break;
 
             default:
