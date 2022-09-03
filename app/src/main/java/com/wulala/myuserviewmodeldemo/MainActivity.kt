@@ -94,7 +94,6 @@ class MainActivity : ComponentActivity() {
                             composable("cmd_test_page") { CmdTestScreen(simpleBleViewModel) }
                             composable("lock_cmd_page") { LockCmdScreen(simpleBleViewModel) }
                             composable("test0902_page") { Test0902Screen(simpleBleViewModel) }
-
                         }
                     }
 

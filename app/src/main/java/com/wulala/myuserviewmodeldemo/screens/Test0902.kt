@@ -1,5 +1,6 @@
 package com.wulala.myuserviewmodeldemo.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -10,13 +11,13 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.wulala.blecom.viewmodels.SimpleBLEViewModel
-import com.wulala.myuserviewmodeldemo.ui.components.NiceHorizonDivider
-import com.wulala.myuserviewmodeldemo.ui.components.NiceHorizonSpacer
-import com.wulala.myuserviewmodeldemo.ui.components.NiceVerticalSpacer
-import com.wulala.myuserviewmodeldemo.ui.components.TextFieldInput
+import com.wulala.myuserviewmodeldemo.ui.components.*
+import kotlin.experimental.and
+import kotlin.math.log
 
 val cmd001 = byteArrayOf(
     0xB0.toByte(), 1,                                               // 第一条：序号为1
@@ -41,6 +42,7 @@ val cmd001 = byteArrayOf(
 fun Test0902Screen(bleViewModel: SimpleBLEViewModel) {
     val scrollState = rememberScrollState()
     LaunchedEffect(Unit) { scrollState.animateScrollTo(10000) }
+
     val cmdLog001 = remember { mutableStateOf("发送命令") }
     val cmdId = remember { mutableStateOf(1) }
     val channelAAbsProgress = remember { mutableStateOf(0) }
@@ -49,6 +51,9 @@ fun Test0902Screen(bleViewModel: SimpleBLEViewModel) {
     val channelARelProgress = remember { mutableStateOf(0) }
     val channelBRelProgress = remember { mutableStateOf(0) }
 
+    val channelASoftLimit = remember { mutableStateOf("100") }
+    val channelBSoftLimit = remember { mutableStateOf("100") }
+
     val channelAWaveX = remember { mutableStateOf("1") }
     val channelAWaveY = remember { mutableStateOf("100") }
     val channelAWaveZ = remember { mutableStateOf("10") }
@@ -56,11 +61,13 @@ fun Test0902Screen(bleViewModel: SimpleBLEViewModel) {
     val channelBWaveX = remember { mutableStateOf("1") }
     val channelBWaveY = remember { mutableStateOf("100") }
     val channelBWaveZ = remember { mutableStateOf("10") }
-    val channelASoftLimit = remember { mutableStateOf("100") }
-    val channelBSoftLimit = remember { mutableStateOf("100") }
+
+    val focusRequester = remember { FocusRequester() }
 
     Column(
-        modifier = Modifier.verticalScroll(scrollState)
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState),
     ) {
 
         Card(
@@ -83,29 +90,54 @@ fun Test0902Screen(bleViewModel: SimpleBLEViewModel) {
 
                     NiceHorizonSpacer()
 
-                    WaveXYZInputRow("CA", channelAWaveX, channelAWaveY, channelAWaveZ)
+                    WaveXYZInputRow("CA", channelAWaveX, channelAWaveY, channelAWaveZ, focusRequester)
                     NiceHorizonSpacer()
 
-                    WaveXYZInputRow("CB", channelBWaveX, channelBWaveY, channelBWaveZ)
+                    WaveXYZInputRow("CB", channelBWaveX, channelBWaveY, channelBWaveZ, focusRequester)
                     NiceHorizonSpacer()
 
-                    SoftLimitInputRow(channelASoftLimit, channelBSoftLimit)
+                    SoftLimitInputRow(channelASoftLimit, channelBSoftLimit, focusRequester)
                     NiceHorizonSpacer()
 
                     Button(onClick = {
                         val cmd = byteArrayOf(
-                            0xB0.toByte(), cmdId.value.toByte(),                                               // 第一条：序号为1
-                            channelAAbsProgress.value.toByte(), channelBAbsProgress.value.toByte(),                                   // A通道强度强制设定值（1字节）+B通道强度强制设定值（1字节）
-                            channelARelProgress.value.toByte(), channelBRelProgress.value.toByte(),                 // +A通道强度变化量（2字节）+B通道强度变化量（2字节）
-                            0x64, 0x64,                                                     // A通道强度软上限（1字节）+B通道强度软上限（1字节）
-                            channelAWaveX.value.toByte(), channelAWaveY.value.toByte(), channelAWaveZ.value.toByte(), 0xff.toByte(),                 // A通道波形数据【1,9,10】
-                            channelBWaveX.value.toByte(), channelBWaveY.value.toByte(), channelBWaveZ.value.toByte(), 0xff.toByte()
+                            0xB0.toByte(), cmdId.value.toByte(),                                                    // 第一条：序号为1
+                            channelAAbsProgress.value.toByte(), channelBAbsProgress.value.toByte(),                 // A通道强度强制设定值（1字节）+B通道强度强制设定值（1字节）
+
+                            // A通道强度相对设定值（2字节）
+                            channelARelProgress.value.shr(8).toByte(), channelARelProgress.value.toByte(),
+
+                            channelBRelProgress.value.shr(8).toByte(), channelBRelProgress.value.toByte(),  // +A通道强度变化量（2字节）+B通道强度变化量（2字节）
+
+                            // A通道强度软上限（1字节）+B通道强度软上限（1字节）
+                            channelASoftLimit.value.toByte(), channelBSoftLimit.value.toByte(),
+
+                            // A通道波形数据
+                            (channelAWaveX.value.toInt() and 0xFF).toByte(),
+                            (channelAWaveY.value.toInt().shr(8).toByte() and 0xFF.toByte()),
+                            (channelAWaveY.value.toInt() and 0xFF).toByte(),
+                            (channelAWaveZ.value.toInt() and 0xFF).toByte(),
+
+                            // B通道波形数据
+                            (channelBWaveX.value.toInt() and 0xFF).toByte(),
+                            (channelBWaveY.value.toInt().shr(8).toByte() and 0xFF.toByte()),
+                            (channelBWaveY.value.toInt() and 0xFF).toByte(),
+                            (channelBWaveZ.value.toInt() and 0xFF).toByte()
                         )
+                        Log.d(TAG, "cmd: $cmd")
+
                         bleViewModel.writeCmd(cmd)
-                        cmdLog001.value = "发送命令${cmdId.value++}"
+                        cmdLog001.value = "发送命令${cmdId.value}"
+                        cmdId.value++
                     }) {
                         Text("发送命令")
                     }
+
+                    NiceHorizonSpacer()
+
+                    Text("发送0xB0: ${cmdId.value}")
+                    // :[0]:0xb0:[1]:0x01:[2]:0x00:[3]:0x00:[4]:0x00:[5]:0x00:[6]:0x00:[7]:0x00:[8]:0x64:[9]:0x64:
+                    // [10]:0x01:[11]:0x64:[12]:0x0a:[13]:0xff:[14]:0x01:[15]:0x64:[16]:0x0a:[17]:0xff:
                 }
             }
         }
@@ -134,35 +166,35 @@ fun AbsPowerSlider(channelAbsProgress: MutableState<Int>) {
 }
 
 @Composable
-fun WaveXYZInputRow(inputTitle: String, waveX: MutableState<String>, waveY: MutableState<String>, waveZ: MutableState<String>) {
+fun WaveXYZInputRow(inputTitle: String, waveX: MutableState<String>, waveY: MutableState<String>, waveZ: MutableState<String>, focusRequester: FocusRequester) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(inputTitle)
         NiceVerticalSpacer()
-        TextFieldInput(input = waveX.value, inputChanged = {
+        TextFieldInputWithFocus(input = waveX.value, inputChanged = {
             waveX.value = it
-        }, labelText = "X", width = 50.dp)
+        }, labelText = "X", width = 50.dp, focusRequester)
         NiceVerticalSpacer()
-        TextFieldInput(input = waveY.value, inputChanged = {
+        TextFieldInputWithFocus(input = waveY.value, inputChanged = {
             waveY.value = it
-        }, labelText = "Y", width = 80.dp)
+        }, labelText = "Y", width = 80.dp, focusRequester)
         NiceVerticalSpacer()
-        TextFieldInput(input = waveZ.value, inputChanged = {
+        TextFieldInputWithFocus(input = waveZ.value, inputChanged = {
             waveZ.value = it
-        }, labelText = "Z", width = 50.dp)
+        }, labelText = "Z", width = 50.dp, focusRequester)
     }
 }
 
 @Composable
-fun SoftLimitInputRow( softLimitA: MutableState<String>, softLimitB: MutableState<String>){
+fun SoftLimitInputRow(softLimitA: MutableState<String>, softLimitB: MutableState<String>, focusRequester: FocusRequester) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text("通道AB软上限: ")
         NiceVerticalSpacer()
-        TextFieldInput(input = softLimitA.value, inputChanged = {
+        TextFieldInputWithFocus(input = softLimitA.value, inputChanged = {
             softLimitA.value = it
-        }, labelText = "A", width = 80.dp)
+        }, labelText = "A", width = 80.dp, focusRequester)
         NiceVerticalSpacer()
-        TextFieldInput(input = softLimitB.value, inputChanged = {
+        TextFieldInputWithFocus(input = softLimitB.value, inputChanged = {
             softLimitB.value = it
-        }, labelText = "B", width = 80.dp)
+        }, labelText = "B", width = 80.dp, focusRequester)
     }
 }
