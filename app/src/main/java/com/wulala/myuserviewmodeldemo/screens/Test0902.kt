@@ -4,28 +4,30 @@ import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Button
-import androidx.compose.material.Card
-import androidx.compose.material.Slider
-import androidx.compose.material.Text
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.materialIcon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.wulala.blecom.utils.Tools.bytesToHex
 import com.wulala.blecom.viewmodels.SimpleBLEViewModel
 import com.wulala.myuserviewmodeldemo.ui.components.*
 import kotlin.experimental.and
 import kotlin.math.log
 
-val cmd001 = byteArrayOf(
+var cmd001 = byteArrayOf(
     0xB0.toByte(), 1,                                               // 第一条：序号为1
-    0xff.toByte(), 0xff.toByte(),                                   // A通道强度强制设定值（1字节）+B通道强度强制设定值（1字节）
-    0x80.toByte(), 0xff.toByte(), 1, 0xff.toByte(),                 // +A通道强度变化量（2字节）+B通道强度变化量（2字节）
-    0x64, 0x64,                                                     // A通道强度软上限（1字节）+B通道强度软上限（1字节）
-    0xff.toByte(), 0, 0xff.toByte(), 0xff.toByte(),                 // A通道波形数据【1,9,10】
-    0xff.toByte(), 0, 0xff.toByte(), 0xff.toByte()
+//    0xff.toByte(), 0xff.toByte(),                                   // A通道强度强制设定值（1字节）+B通道强度强制设定值（1字节）
+//    0x80.toByte(), 0xff.toByte(), 1, 0xff.toByte(),                 // +A通道强度变化量（2字节）+B通道强度变化量（2字节）
+//    0x64, 0x64,                                                     // A通道强度软上限（1字节）+B通道强度软上限（1字节）
+//    0xff.toByte(), 0, 0xff.toByte(), 0xff.toByte(),                 // A通道波形数据【1,9,10】
+//    0xff.toByte(), 0, 0xff.toByte(), 0xff.toByte()
 )
 
 // 1、在现版本安卓APP的基础上，搜索的设备名称改成DG-LAB_1000
@@ -38,12 +40,14 @@ val cmd001 = byteArrayOf(
 // 当时的判定方式是，收到的强度数值如果等于发出的强度数值那么认为已回复，举例发出了A,B通道强度为10,1。那么如果收到了10,1等于这一条已经收到。而新版本使用的是收到了和发出指令序列号一样的强度回调来确认已收到回复。
 // 命令发送按钮后面有log显示
 
+// 4、之前的版本里，当一个通道开启输出时会将强度强制置1，而一个通道关闭输出强度置0。这个功能是通过一个标志位实现的，也是在每0.1秒做判断，如果有这个标志位的话先判断标志位。
+
 @Composable
 fun Test0902Screen(bleViewModel: SimpleBLEViewModel) {
     val scrollState = rememberScrollState()
     LaunchedEffect(Unit) { scrollState.animateScrollTo(10000) }
 
-    val cmdLog001 = remember { mutableStateOf("发送命令") }
+    // val cmdLog001 = remember { mutableStateOf("发送命令") }
     val cmdId = remember { mutableStateOf(1) }
     val channelAAbsProgress = remember { mutableStateOf(0) }
     val channelBAbsProgress = remember { mutableStateOf(0) }
@@ -63,6 +67,8 @@ fun Test0902Screen(bleViewModel: SimpleBLEViewModel) {
     val channelBWaveZ = remember { mutableStateOf("10") }
 
     val focusRequester = remember { FocusRequester() }
+
+    var playState by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -100,7 +106,7 @@ fun Test0902Screen(bleViewModel: SimpleBLEViewModel) {
                     NiceHorizonSpacer()
 
                     Button(onClick = {
-                        val cmd = byteArrayOf(
+                        cmd001 = byteArrayOf(
                             0xB0.toByte(), cmdId.value.toByte(),                                                    // 第一条：序号为1
                             channelAAbsProgress.value.toByte(), channelBAbsProgress.value.toByte(),                 // A通道强度强制设定值（1字节）+B通道强度强制设定值（1字节）
 
@@ -110,7 +116,8 @@ fun Test0902Screen(bleViewModel: SimpleBLEViewModel) {
                             channelBRelProgress.value.shr(8).toByte(), channelBRelProgress.value.toByte(),  // +A通道强度变化量（2字节）+B通道强度变化量（2字节）
 
                             // A通道强度软上限（1字节）+B通道强度软上限（1字节）
-                            channelASoftLimit.value.toByte(), channelBSoftLimit.value.toByte(),
+                            (channelASoftLimit.value.toInt() and 0xFF).toByte(),
+                            (channelBSoftLimit.value.toInt() and 0xFF).toByte(),
 
                             // A通道波形数据
                             (channelAWaveX.value.toInt() and 0xFF).toByte(),
@@ -124,10 +131,10 @@ fun Test0902Screen(bleViewModel: SimpleBLEViewModel) {
                             (channelBWaveY.value.toInt() and 0xFF).toByte(),
                             (channelBWaveZ.value.toInt() and 0xFF).toByte()
                         )
-                        Log.d(TAG, "cmd: $cmd")
+                        // Log.d(TAG, "cmd: $cmd")
 
-                        bleViewModel.writeCmd(cmd)
-                        cmdLog001.value = "发送命令${cmdId.value}"
+                        bleViewModel.writeCmd(cmd001)
+                        // cmdLog001.value = "发送命令${cmdId.value}"
                         cmdId.value++
                     }) {
                         Text("发送命令")
@@ -135,9 +142,33 @@ fun Test0902Screen(bleViewModel: SimpleBLEViewModel) {
 
                     NiceHorizonSpacer()
 
-                    Text("发送0xB0: ${cmdId.value}")
+                    Text("发送: " + bytesToHex(cmd001))
                     // :[0]:0xb0:[1]:0x01:[2]:0x00:[3]:0x00:[4]:0x00:[5]:0x00:[6]:0x00:[7]:0x00:[8]:0x64:[9]:0x64:
                     // [10]:0x01:[11]:0x64:[12]:0x0a:[13]:0xff:[14]:0x01:[15]:0x64:[16]:0x0a:[17]:0xff:
+
+                    NiceHorizonDivider()
+
+                    Row() {
+
+                        Button(onClick = {
+                            playState = !playState
+                            bleViewModel.keepSendingCmd(cmd001, 1000)
+                        }) {
+                            if (!playState) {
+                                Icon(
+                                    Icons.Filled.PlayArrow,
+                                    contentDescription = "play",
+                                )
+                                Text("播放")
+                            } else {
+                                Icon(
+                                    Icons.Filled.Pause,
+                                    contentDescription = "Stop",
+                                )
+                                Text("停止")
+                            }
+                        }
+                    }
                 }
             }
         }

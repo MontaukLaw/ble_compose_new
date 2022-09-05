@@ -3,6 +3,7 @@ package com.wulala.blecom.viewmodels;
 import android.annotation.SuppressLint;
 import android.app.Application;
 import android.bluetooth.BluetoothDevice;
+import android.os.Handler;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -39,12 +40,15 @@ public class SimpleBLEViewModel extends AndroidViewModel {
     }
 
     // Human LOG
-    public MutableLiveData<String> getLogForHuman(){
+    public MutableLiveData<String> getLogForHuman() {
         return newSuMManager.getLogForHuman();
     }
 
     private BluetoothDevice relayDevice;
 
+    private byte[] keepSendingCmd = new byte[0];
+    private long keepSendingDelayMs = 0;
+    boolean sending = false;
     public void clearDevices() {
         scanResultDevicesLiveData.clear();
     }
@@ -58,6 +62,23 @@ public class SimpleBLEViewModel extends AndroidViewModel {
 
         Log.d(TAG, "BLEViewModel: init");
         newSuMManager = new NewSuMManager(application);
+
+        final Handler mHandler = new Handler();
+
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                // writeCmd(cmd);
+                if (sending) {
+                    // writeCmd(keepSendingCmd);
+
+                    Log.d(TAG, "sending: ");
+                }
+                //每隔n秒循环执行run方法
+                mHandler.postDelayed(this, keepSendingDelayMs);
+            }
+        };
+        mHandler.postDelayed(r, 1);
 
     }
 
@@ -174,9 +195,17 @@ public class SimpleBLEViewModel extends AndroidViewModel {
     public void writeCmd(byte[] cmd) {
         if (newSuMManager.isConnected()) {
             newSuMManager.writeByteArray(cmd);
-        }else{
+        } else {
             Log.d(TAG, "Not connected: ");
         }
     }
 
+    public void keepSendingCmd(byte[] cmd, long delayMillSecs) {
+        sending = !sending;
+
+        if (sending) {
+            keepSendingDelayMs = delayMillSecs;
+            keepSendingCmd = cmd;
+        }
+    }
 }
