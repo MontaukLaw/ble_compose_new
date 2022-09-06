@@ -303,6 +303,11 @@ public class SuMBLEManager extends ObservableBleManager {
         }
 
         @Override
+        public void getPowerNow(byte ca, byte cb) {
+
+        }
+
+        @Override
         public void onNewMsg(BaseUploadMsg notifyMsg) {
 
             switch (notifyMsg.getMsgType()) {

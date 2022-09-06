@@ -134,9 +134,9 @@ fun CmdTestScreen(bleViewModel: SimpleBLEViewModel) {
                         Button({
                             val cmd1 = byteArrayOf(
                                 0xB0.toByte(), 1,                // 第一条：序号为1
-                                0x0, 0x0a,                       // A通道强度强制设定为【无设置】，
+                                0xFF.toByte(), 0x0a,                       // A通道强度强制设定为【无设置】，
                                 0, 0x0a, 0x00, 0x05,             // A通道强度变化量为【+10】
-                                0, 210.toByte(),                 // A通道强度软上限为【无设置】
+                                210.toByte(), 210.toByte(),                 // A通道强度软上限为【无设置】
                                 1, 0, 9, 0x0a,                   // A通道波形数据【1,9,10】
                                 5, 0, 0x03, 0x0a
                             )
@@ -144,7 +144,7 @@ fun CmdTestScreen(bleViewModel: SimpleBLEViewModel) {
                             val cmd2 = byteArrayOf(
                                 0xB0.toByte(), 0,                // 第二条：序号为0
                                 0x0a, 0x05,                      // A通道强度强制设定为【10】
-                                0x80.toByte(), 0x05, 0x00, 0x05, // A通道强度变化量为【-5】
+                                0xFF.toByte(), 0xFB.toByte(), 0x00, 0x05, // A通道强度变化量为【-5】
                                 254.toByte(), 210.toByte(),      // A通道强度软上限为【无设置】
                                 1, 0, 9, 0x0f,                   // A通道波形数据【1,9,15】
                                 5, 0, 0x03, 0x0a
@@ -152,9 +152,9 @@ fun CmdTestScreen(bleViewModel: SimpleBLEViewModel) {
 
                             val cmd3 = byteArrayOf(
                                 0xB0.toByte(), 0x02,             // 第三条：序号为2
-                                0x0, 0x0a,                       // A通道强度强制设定为【无设置】
+                                0xFF.toByte(), 0x0a,             // A通道强度强制设定为【无设置】
                                 0x00, 0x01, 0x00, 0x05,          // +A通道强度变化量（2字节）+B通道强度变化量（2字节）
-                                0, 210.toByte(),                 // A通道强度软上限为【无设置】
+                                210.toByte(), 210.toByte(),      // A通道强度软上限为【无设置】
                                 1, 0, 9, 0x10,                   // A通道波形数据【1,9,20】
                                 5, 0, 0x03, 0x0a
                             )
@@ -242,7 +242,7 @@ fun CmdTestScreen(bleViewModel: SimpleBLEViewModel) {
                             val cmd = byteArrayOf(
                                 0xB0.toByte(), 1,                // 第一条：序号为1
                                 0xff.toByte(), 0xff.toByte(),    // A通道强度强制设定值（1字节）+B通道强度强制设定值（1字节）
-                                0x80.toByte(),  0xff.toByte(), 1,  0xff.toByte(),                      // +A通道强度变化量（2字节）+B通道强度变化量（2字节）
+                                0x80.toByte(), 0xff.toByte(), 1, 0xff.toByte(),                      // +A通道强度变化量（2字节）+B通道强度变化量（2字节）
                                 0x64, 0x64,                      // A通道强度软上限（1字节）+B通道强度软上限（1字节）
                                 0xff.toByte(), 0, 0xff.toByte(), 0xff.toByte(),                   // A通道波形数据【1,9,10】
                                 0xff.toByte(), 0, 0xff.toByte(), 0xff.toByte()

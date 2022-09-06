@@ -70,6 +70,9 @@ fun Test0902Screen(bleViewModel: SimpleBLEViewModel) {
 
     var playState by remember { mutableStateOf(false) }
 
+    val caAbsCheckedState = remember { mutableStateOf(false) }
+    val cbAbsCheckedState = remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -84,9 +87,10 @@ fun Test0902Screen(bleViewModel: SimpleBLEViewModel) {
         ) {
             Box(modifier = Modifier.padding(16.dp)) {
                 Column {
-                    Text("A通道绝对强度:${channelAAbsProgress.value} B通道绝对强度:${channelBAbsProgress.value}")
+                    Text("绝对强度(超200无效): A ${channelAAbsProgress.value} B ${channelBAbsProgress.value}")
 
                     AbsPowerSlider(channelAAbsProgress)
+
                     AbsPowerSlider(channelBAbsProgress)
 
                     Text("A通道相对强度:${channelARelProgress.value} B通道相对强度:${channelBRelProgress.value}")
@@ -112,7 +116,6 @@ fun Test0902Screen(bleViewModel: SimpleBLEViewModel) {
 
                             // A通道强度相对设定值（2字节）
                             channelARelProgress.value.shr(8).toByte(), channelARelProgress.value.toByte(),
-
                             channelBRelProgress.value.shr(8).toByte(), channelBRelProgress.value.toByte(),  // +A通道强度变化量（2字节）+B通道强度变化量（2字节）
 
                             // A通道强度软上限（1字节）+B通道强度软上限（1字节）
@@ -148,7 +151,7 @@ fun Test0902Screen(bleViewModel: SimpleBLEViewModel) {
 
                     NiceHorizonDivider()
 
-                    Row() {
+                    Row{
 
                         Button(onClick = {
                             playState = !playState
@@ -189,9 +192,9 @@ fun RelPowerSlide(channelRelProgress: MutableState<Int>) {
 @Composable
 fun AbsPowerSlider(channelAbsProgress: MutableState<Int>) {
     Slider(
-        value = channelAbsProgress.value / 200.toFloat(),
+        value = channelAbsProgress.value / 255.toFloat(),
         onValueChange = {
-            channelAbsProgress.value = (it * 200).toInt()
+            channelAbsProgress.value = (it * 255).toInt()
         },
     )
 }

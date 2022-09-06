@@ -49,6 +49,9 @@ class MainActivity : ComponentActivity() {
 
             val humanLog: String by simpleBleViewModel.logForHuman.observeAsState("中继反馈")
 
+            val powerCa by simpleBleViewModel.channelAPower.observeAsState(0)
+            val powerCb by simpleBleViewModel.channelBPower.observeAsState(0)
+
             MyUserViewModelDemoTheme {
                 Scaffold(
                     topBar = {
@@ -86,7 +89,7 @@ class MainActivity : ComponentActivity() {
                     Column {
                         SimpleCmdDisplay(humanLog)
 
-                        NavHost(navController = navController, startDestination = "test0902_page") {
+                        NavHost(navController = navController, startDestination = "play_sim_page") {
                             // composable("main_page") { MainScreen(bleViewModel) { cmdSentMsgStr = it } }
                             composable("special_cmd_page") { SpecialCmdScreen(simpleBleViewModel) }
                             // composable("lock_cmd_page") { LockCmdScreen(bleViewModel) }
@@ -94,6 +97,8 @@ class MainActivity : ComponentActivity() {
                             composable("cmd_test_page") { CmdTestScreen(simpleBleViewModel) }
                             composable("lock_cmd_page") { LockCmdScreen(simpleBleViewModel) }
                             composable("test0902_page") { Test0902Screen(simpleBleViewModel) }
+                            composable("play_sim_page") { PlaySimScreen(simpleBleViewModel, powerCa, powerCb) }
+
                         }
                     }
 
@@ -127,6 +132,11 @@ class MainActivity : ComponentActivity() {
                         Divider()
                         DropdownMenuItem(onClick = { navController.navigate("test0902_page") }) {
                             Text("0902测试内容")
+                        }
+
+                        Divider()
+                        DropdownMenuItem(onClick = { navController.navigate("play_sim_page") }) {
+                            Text("模拟播放页面")
                         }
                     }
 

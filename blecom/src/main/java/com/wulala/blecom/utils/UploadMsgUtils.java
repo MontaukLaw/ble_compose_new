@@ -133,7 +133,7 @@ public class UploadMsgUtils {
 
             case (byte) 0xB1:
                 return "B1反馈id:" + uploadBytes[1] + " A通道强度: " + uploadBytes[2] + " B通道强度: "
-                        + uploadBytes[3] + " A通道软上限: " + uploadBytes[4] + " B通道软上限: " + uploadBytes[5];
+                        + uploadBytes[3] + " A通道软上限: " + (uploadBytes[4] & 0xff) + " B通道软上限: " + (uploadBytes[5] & 0xff);
 
             default:
                 return "暂时未知类型的消息";

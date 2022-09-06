@@ -12,4 +12,6 @@ public interface RelayNotifyCallback {
 
     void transLog(final String humanLog);
 
+    void getPowerNow(final byte ca, final byte cb);
+
 }

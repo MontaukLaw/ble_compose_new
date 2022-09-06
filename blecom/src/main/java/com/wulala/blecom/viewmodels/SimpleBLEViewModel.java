@@ -1,5 +1,7 @@
 package com.wulala.blecom.viewmodels;
 
+import static com.wulala.blecom.utils.Tools.bytesToHex;
+
 import android.annotation.SuppressLint;
 import android.app.Application;
 import android.bluetooth.BluetoothDevice;
@@ -44,13 +46,85 @@ public class SimpleBLEViewModel extends AndroidViewModel {
         return newSuMManager.getLogForHuman();
     }
 
+    public MutableLiveData<Integer>getChannelAPower(){
+        return newSuMManager.getChannelAPower();
+    }
+
+    public MutableLiveData<Integer>getChannelBPower(){
+        return newSuMManager.getChannelBPower();
+    }
+
     private BluetoothDevice relayDevice;
 
-    private byte[] keepSendingCmd = new byte[0];
+    private byte[] keepSendingCmd = new byte[18];
     private long keepSendingDelayMs = 0;
     boolean sending = false;
+
     public void clearDevices() {
         scanResultDevicesLiveData.clear();
+    }
+
+    boolean keepPlayWaveA = false;
+    boolean keepPlayWaveB = false;
+
+    // byte[][] waveA = {{1, 9, 5}, {1, 9, 10}, {1, 9, 15}, {1, 9, 20}};
+    byte[][] waveA = {{2, 8, 20}, {2, 8, 20}, {2, 8, 20}, {2, 8, 20}};
+    byte[][] waveB = {{10, (byte) 140, 20}, {10, (byte) 140, 15}, {10, (byte) 140, 10}, {10, (byte) 140, 5}};
+
+    private int caIdxCounter = 0;
+    private int cbIdxCounter = 0;
+
+    private int powerCa=0;
+    private int powerCb=0;
+
+
+    private void copyWaveData(byte[] source, int startIdx) {
+        keepSendingCmd[startIdx ] = source[0];
+        keepSendingCmd[startIdx + 1] = 0;
+        keepSendingCmd[startIdx + 2] = source[1];
+        keepSendingCmd[startIdx + 3] = source[2];
+    }
+
+    // CA: 10, 11, 12, 13
+    // CB: 14, 15, 16, 17
+    private void buildKeenSendingCmd() {
+        keepSendingCmd[0] = (byte)0xB0;
+        keepSendingCmd[1] = 0x01;
+        keepSendingCmd[2] = (byte)0xFF;
+        keepSendingCmd[3] = (byte)0xFF;
+
+        keepSendingCmd[8] = (byte)100;
+        keepSendingCmd[9] = (byte)100;
+
+        if (keepPlayWaveA) {
+            copyWaveData(waveA[caIdxCounter], 10);
+
+            caIdxCounter ++;
+            if(caIdxCounter > 3){
+                caIdxCounter = 0;
+            }
+        }else{
+            keepSendingCmd[10] = 0;
+            keepSendingCmd[11] = 0;
+            keepSendingCmd[12] = 0;
+            keepSendingCmd[13] = 0;
+        }
+        if (keepPlayWaveB) {
+            copyWaveData(waveB[cbIdxCounter], 14);
+
+            cbIdxCounter ++;
+            if(cbIdxCounter > 3){
+                cbIdxCounter = 0;
+            }
+
+        }else{
+            keepSendingCmd[14] = 0;
+            keepSendingCmd[15] = 0;
+            keepSendingCmd[16] = 0;
+            keepSendingCmd[17] = 0;
+        }
+        Log.d(TAG, "buildKeenSendingCmd: CA: " + bytesToHex(keepSendingCmd));
+
     }
 
     public SimpleBLEViewModel(@NonNull Application application) {
@@ -64,7 +138,6 @@ public class SimpleBLEViewModel extends AndroidViewModel {
         newSuMManager = new NewSuMManager(application);
 
         final Handler mHandler = new Handler();
-
         Runnable r = new Runnable() {
             @Override
             public void run() {
@@ -79,6 +152,24 @@ public class SimpleBLEViewModel extends AndroidViewModel {
             }
         };
         mHandler.postDelayed(r, 1);
+
+        final Handler waveHandler = new Handler();
+        Runnable r2 = new Runnable() {
+            @Override
+            public void run() {
+                // writeCmd(cmd);
+                if (keepPlayWaveA || keepPlayWaveB) {
+                    // writeCmd(keepSendingCmd);
+                    buildKeenSendingCmd();
+                    // Log.d(TAG, "sending: ");
+                    writeCmd(keepSendingCmd);
+                }
+                //每隔n秒循环执行run方法
+                waveHandler.postDelayed(this, 100);
+            }
+        };
+
+        waveHandler.postDelayed(r2, 1);
 
     }
 
@@ -207,5 +298,15 @@ public class SimpleBLEViewModel extends AndroidViewModel {
             keepSendingDelayMs = delayMillSecs;
             keepSendingCmd = cmd;
         }
+    }
+
+    public void keepPlayWaveCB(int powerCb) {
+        keepPlayWaveB = !keepPlayWaveB;
+        this.powerCb = powerCb;
+    }
+
+    public void keepPlayWaveCA(int powerCa) {
+        keepPlayWaveA = !keepPlayWaveA;
+        this.powerCa = powerCa;
     }
 }

@@ -39,5 +39,9 @@ public abstract class RelayDataCallback implements ProfileDataCallback, RelayNot
             transLog(UploadMsgUtils.translateLogFoHuman(data.getValue()));
         }
 
+        if(data.getValue()[0] == (byte)0xB1){
+            getPowerNow(data.getValue()[2], data.getValue()[3]);
+        }
+
     }
 }

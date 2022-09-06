@@ -49,6 +49,18 @@ public class NewSuMManager extends ObservableBleManager {
 
     private final MutableLiveData<String> logForHuman = new MutableLiveData<>();
 
+    private final MutableLiveData<Integer> channelAPower = new MutableLiveData<>();
+
+    private final MutableLiveData<Integer> channelBPower = new MutableLiveData<>();
+
+    public MutableLiveData<Integer> getChannelAPower() {
+        return channelAPower;
+    }
+
+    public MutableLiveData<Integer> getChannelBPower() {
+        return channelBPower;
+    }
+
     public MutableLiveData<String> getLogForHuman() {
         return logForHuman;
     }
@@ -133,6 +145,12 @@ public class NewSuMManager extends ObservableBleManager {
         public void transLog(String mHumanLog) {
             Log.d(TAG, "transLog" + mHumanLog);
             logForHuman.postValue(mHumanLog);
+        }
+
+        @Override
+        public void getPowerNow(byte ca, byte cb) {
+            channelAPower.postValue(ca & 0xff);
+            channelBPower.postValue(cb & 0xff);
         }
 
         @Override
